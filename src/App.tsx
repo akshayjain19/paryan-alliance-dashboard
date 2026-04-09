@@ -45,14 +45,7 @@ import {
 } from 'recharts';
 
 // Firebase imports
-import { auth, db } from './firebase';
-import { 
-  onAuthStateChanged, 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  User,
-  signOut
-} from 'firebase/auth';
+import { db } from './firebase';
 import { 
   doc, 
   onSnapshot, 
@@ -98,41 +91,37 @@ const initialFunnelData = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('Overview');
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
   const [funnelMetrics, setFunnelMetrics] = useState(initialFunnelData);
   const [isSimulating, setIsSimulating] = useState(false);
 
-  // Auth Listener
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setIsAuthReady(true);
-    });
-    return () => unsubscribe();
-  }, []);
-
   // Firestore Real-time Listener
   useEffect(() => {
-    if (!isAuthReady || !user) return;
-
     const funnelDocRef = doc(db, 'funnel', 'current');
     
     // Initialize doc if it doesn't exist
     const initDoc = async () => {
-      const docSnap = await getDoc(funnelDocRef);
-      if (!docSnap.exists()) {
-        await setDoc(funnelDocRef, {
-          views: 125000,
-          likes: 18400,
-          comments: 4200,
-          shares: 2100,
-          saves: 3800,
-          visits: 8600,
-          enquiries: 1240,
-          payments: 186,
-          updatedAt: new Date().toISOString()
-        });
+      try {
+        const docSnap = await getDoc(funnelDocRef);
+        if (!docSnap.exists()) {
+          await setDoc(funnelDocRef, {
+            views: 125000,
+            likes: 18400,
+            comments: 4200,
+            shares: 2100,
+            saves: 3800,
+            visits: 8600,
+            enquiries: 1240,
+            payments: 186,
+            updatedAt: new Date().toISOString()
+          });
+        }
+      } catch (error: any) {
+        // If it's a permission error, it might be because the user is not an admin
+        // and the doc already exists (but they can't see it yet) or they just can't create it.
+        // We can ignore this for non-admins as the admin will have initialized it.
+        if (error.code !== 'permission-denied') {
+          console.error("Init Doc Error:", error);
+        }
       }
     };
     initDoc();
@@ -150,21 +139,9 @@ export default function App() {
     });
 
     return () => unsubscribe();
-  }, [isAuthReady, user]);
-
-  const handleLogin = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Login Error:", error);
-    }
-  };
-
-  const handleLogout = () => signOut(auth);
+  }, []);
 
   const simulateConversion = async () => {
-    if (!user) return;
     setIsSimulating(true);
     const path = 'funnel/current';
     try {
@@ -187,63 +164,10 @@ export default function App() {
   function handleFirestoreError(error: any, operationType: string, path: string | null) {
     const errInfo = {
       error: error instanceof Error ? error.message : String(error),
-      authInfo: {
-        userId: auth.currentUser?.uid,
-        email: auth.currentUser?.email,
-        emailVerified: auth.currentUser?.emailVerified,
-        isAnonymous: auth.currentUser?.isAnonymous,
-        tenantId: auth.currentUser?.tenantId,
-        providerInfo: auth.currentUser?.providerData.map(provider => ({
-          providerId: provider.providerId,
-          displayName: provider.displayName,
-          email: provider.email,
-          photoUrl: provider.photoURL
-        })) || []
-      },
       operationType,
       path
     };
     console.error('Firestore Error: ', JSON.stringify(errInfo));
-    // We don't necessarily want to crash the whole app in a real-time dashboard, 
-    // but logging it clearly is required.
-  }
-
-  if (!isAuthReady) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-surface">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="w-12 h-12 bg-primary/20 rounded-full" />
-          <p className="text-primary font-medium">Loading Portal...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-surface p-6">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full bg-surface-container-lowest p-8 rounded-2xl ambient-shadow flex flex-col items-center text-center gap-6"
-        >
-          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20">
-            <LayoutDashboard size={32} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Paryan Alliance Portal</h1>
-            <p className="text-gray-500 mt-2">Please sign in to access the real-time conversion dashboard.</p>
-          </div>
-          <button 
-            onClick={handleLogin}
-            className="w-full flex items-center justify-center gap-3 py-4 signature-gradient text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform"
-          >
-            <LogIn size={20} />
-            Sign in with Google
-          </button>
-        </motion.div>
-      </div>
-    );
   }
 
   return (
@@ -289,10 +213,6 @@ export default function App() {
             <LifeBuoy size={20} />
             Support
           </button>
-          <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg w-full">
-            <LogOut size={20} />
-            Logout
-          </button>
         </div>
       </aside>
 
@@ -329,7 +249,7 @@ export default function App() {
         <div className="p-8 flex flex-col gap-8">
           {/* Welcome Header */}
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold tracking-tight">Welcome back, {user.displayName?.split(' ')[0] || 'Dilbagh'}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Welcome back, Dilbagh</h1>
             <button 
               onClick={simulateConversion}
               disabled={isSimulating}
