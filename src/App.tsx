@@ -28,9 +28,11 @@ import {
   MessageSquare,
   CreditCard,
   LogIn,
-  Zap
+  Zap,
+  Menu,
+  X
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   LineChart, 
   Line, 
@@ -93,6 +95,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('Overview');
   const [funnelMetrics, setFunnelMetrics] = useState(initialFunnelData);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Firestore Real-time Listener
   useEffect(() => {
@@ -171,19 +174,43 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-surface">
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
-      <aside className="w-64 bg-surface-container-low flex flex-col p-6 gap-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-               <div className="w-3 h-3 bg-primary rounded-full" />
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-surface-container-low flex flex-col p-6 gap-8 transition-transform duration-300 lg:relative lg:translate-x-0
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+              <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                 <div className="w-3 h-3 bg-primary rounded-full" />
+              </div>
+            </div>
+            <div>
+              <h1 className="font-bold text-lg leading-tight">The Digital Agronomist</h1>
+              <p className="text-xs text-gray-500">Full-Funnel Tracking</p>
             </div>
           </div>
-          <div>
-            <h1 className="font-bold text-lg leading-tight">The Digital Agronomist</h1>
-            <p className="text-xs text-gray-500">Full-Funnel Tracking</p>
-          </div>
+          <button 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg lg:hidden"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         <nav className="flex-1 flex flex-col gap-2">
@@ -195,7 +222,10 @@ export default function App() {
           ].map((item) => (
             <button
               key={item.name}
-              onClick={() => setActiveTab(item.name)}
+              onClick={() => {
+                setActiveTab(item.name);
+                setIsMobileMenuOpen(false);
+              }}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === item.name 
                   ? 'bg-[#e0f2e9] text-primary font-medium' 
@@ -219,23 +249,29 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-y-auto bg-surface">
         {/* Top Nav */}
-        <header className="glass-nav sticky top-0 z-10 px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <h2 className="text-primary font-bold text-xl">Paryan Alliance Portal</h2>
-            <nav className="flex gap-6">
+        <header className="glass-nav sticky top-0 z-30 px-4 lg:px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4 lg:gap-8">
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg lg:hidden"
+            >
+              <Menu size={24} />
+            </button>
+            <h2 className="text-primary font-bold text-lg lg:text-xl truncate">Paryan Alliance Portal</h2>
+            <nav className="hidden md:flex gap-6">
               <a href="#" className="text-primary font-medium border-b-2 border-primary pb-1">Dashboard</a>
               <a href="#" className="text-gray-500 hover:text-primary transition-colors">Inventory</a>
               <a href="#" className="text-gray-500 hover:text-primary transition-colors">Customers</a>
             </nav>
           </div>
-          <div className="flex items-center gap-4">
-            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+          <div className="flex items-center gap-2 lg:gap-4">
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full hidden sm:block">
               <Bell size={20} />
             </button>
-            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full hidden sm:block">
               <Settings size={20} />
             </button>
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20">
+            <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full overflow-hidden border-2 border-primary/20">
               <img 
                 src="https://picsum.photos/seed/farmer/100/100" 
                 alt="Profile" 
@@ -246,14 +282,14 @@ export default function App() {
           </div>
         </header>
 
-        <div className="p-8 flex flex-col gap-8">
+        <div className="p-4 lg:p-8 flex flex-col gap-6 lg:gap-8">
           {/* Welcome Header */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold tracking-tight">Welcome back, Dilbagh</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Welcome back, Dilbagh</h1>
             <button 
               onClick={simulateConversion}
               disabled={isSimulating}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm transition-all w-full sm:w-auto ${
                 isSimulating 
                   ? 'bg-gray-100 text-gray-400' 
                   : 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'
@@ -265,7 +301,7 @@ export default function App() {
           </div>
 
           {/* Metric Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             <MetricCard 
               title="Coupons Redeemed Today" 
               value="42" 
@@ -292,14 +328,14 @@ export default function App() {
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Trend Chart */}
-            <div className="lg:col-span-2 bg-surface-container-lowest rounded-xl p-6 ambient-shadow">
-              <div className="flex items-center justify-between mb-6">
+            <div className="lg:col-span-2 bg-surface-container-lowest rounded-xl p-4 lg:p-6 ambient-shadow">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <h3 className="font-bold text-lg">Redemption Trends (Last 7 Days)</h3>
-                <button className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low rounded-lg text-sm font-medium">
+                <button className="flex items-center justify-center gap-2 px-3 py-1.5 bg-surface-container-low rounded-lg text-sm font-medium w-full sm:w-auto">
                   This Week <ChevronDown size={16} />
                 </button>
               </div>
-              <div className="h-[300px] w-full">
+              <div className="h-[250px] lg:h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trendData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eff4fc" />
@@ -307,7 +343,7 @@ export default function App() {
                       dataKey="name" 
                       axisLine={false} 
                       tickLine={false} 
-                      tick={{ fill: '#9ca3af', fontSize: 12 }}
+                      tick={{ fill: '#9ca3af', fontSize: 10 }}
                       dy={10}
                     />
                     <YAxis hide />
@@ -329,7 +365,7 @@ export default function App() {
 
             {/* Crop Interests & Actions */}
             <div className="flex flex-col gap-6">
-              <div className="bg-surface-container-lowest rounded-xl p-6 ambient-shadow flex-1">
+              <div className="bg-surface-container-lowest rounded-xl p-4 lg:p-6 ambient-shadow flex-1">
                 <h3 className="font-bold text-lg mb-4">Crop Interests</h3>
                 <div className="h-[200px] relative">
                   <ResponsiveContainer width="100%" height="100%">
@@ -370,86 +406,88 @@ export default function App() {
           </div>
 
           {/* Funnel Metrics Section */}
-          <div className="bg-surface-container-lowest rounded-xl p-8 ambient-shadow">
-            <div className="flex items-center justify-between mb-8">
+          <div className="bg-surface-container-lowest rounded-xl p-4 lg:p-8 ambient-shadow overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
               <div>
                 <h3 className="font-bold text-xl">Conversion Funnel</h3>
                 <p className="text-gray-500 text-sm">Tracking user journey from initial view to final payment</p>
               </div>
               <div className="flex gap-2">
-                 <button className="px-4 py-2 bg-surface-container-low rounded-lg text-sm font-bold text-primary">Last 30 Days</button>
-                 <button className="px-4 py-2 hover:bg-surface-container-low rounded-lg text-sm font-bold text-gray-500 transition-colors">Export Data</button>
+                 <button className="flex-1 sm:flex-none px-4 py-2 bg-surface-container-low rounded-lg text-sm font-bold text-primary">Last 30 Days</button>
+                 <button className="flex-1 sm:flex-none px-4 py-2 hover:bg-surface-container-low rounded-lg text-sm font-bold text-gray-500 transition-colors">Export</button>
               </div>
             </div>
 
-            <div className="flex flex-col gap-1">
-              {funnelMetrics.map((item, index) => {
-                const prevValue = index > 0 ? funnelMetrics[index - 1].value : item.value;
-                const conversion = index > 0 ? ((item.value / prevValue) * 100).toFixed(1) : '100';
-                const totalConversion = ((item.value / funnelMetrics[0].value) * 100).toFixed(2);
-                const maxWidth = 100 - (index * 5); // Visual funnel effect
+            <div className="flex flex-col gap-1 overflow-x-auto">
+              <div className="min-w-[600px]">
+                {funnelMetrics.map((item, index) => {
+                  const prevValue = index > 0 ? funnelMetrics[index - 1].value : item.value;
+                  const conversion = index > 0 ? ((item.value / prevValue) * 100).toFixed(1) : '100';
+                  const totalConversion = ((item.value / funnelMetrics[0].value) * 100).toFixed(2);
+                  const maxWidth = 100 - (index * 5); // Visual funnel effect
 
-                return (
-                  <div key={item.label} className="relative group">
-                    <div className="flex items-center gap-6 py-3">
-                      {/* Icon & Label */}
-                      <div className="w-48 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                          <item.icon size={16} />
-                        </div>
-                        <span className="text-sm font-medium text-gray-700">{item.label}</span>
-                      </div>
-
-                      {/* Funnel Bar */}
-                      <div className="flex-1 h-12 bg-surface-container-low rounded-lg overflow-hidden relative">
-                        <motion.div 
-                          initial={false}
-                          animate={{ width: `${maxWidth}%` }}
-                          transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-                          className="h-full signature-gradient opacity-90 relative"
-                        >
-                          <div className="absolute inset-y-0 right-4 flex items-center">
-                             <motion.span 
-                               key={item.value}
-                               initial={{ scale: 1.2, color: '#fff' }}
-                               animate={{ scale: 1, color: '#fff' }}
-                               className="text-white font-bold text-sm"
-                             >
-                               {item.value.toLocaleString()}
-                             </motion.span>
+                  return (
+                    <div key={item.label} className="relative group">
+                      <div className="flex items-center gap-6 py-3">
+                        {/* Icon & Label */}
+                        <div className="w-40 lg:w-48 flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                            <item.icon size={16} />
                           </div>
-                        </motion.div>
-                      </div>
+                          <span className="text-sm font-medium text-gray-700 truncate">{item.label}</span>
+                        </div>
 
-                      {/* Metrics */}
-                      <div className="w-48 flex flex-col items-end">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-400 uppercase tracking-wider font-bold">Conv.</span>
-                          <span className={`text-sm font-bold ${index === 0 ? 'text-gray-400' : 'text-primary'}`}>
-                            {index === 0 ? '-' : `${conversion}%`}
-                          </span>
+                        {/* Funnel Bar */}
+                        <div className="flex-1 h-12 bg-surface-container-low rounded-lg overflow-hidden relative">
+                          <motion.div 
+                            initial={false}
+                            animate={{ width: `${maxWidth}%` }}
+                            transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+                            className="h-full signature-gradient opacity-90 relative"
+                          >
+                            <div className="absolute inset-y-0 right-4 flex items-center">
+                               <motion.span 
+                                 key={item.value}
+                                 initial={{ scale: 1.2, color: '#fff' }}
+                                 animate={{ scale: 1, color: '#fff' }}
+                                 className="text-white font-bold text-sm"
+                               >
+                                 {item.value.toLocaleString()}
+                               </motion.span>
+                            </div>
+                          </motion.div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Of Total</span>
-                          <span className="text-xs font-medium text-gray-500">{totalConversion}%</span>
+
+                        {/* Metrics */}
+                        <div className="w-32 lg:w-48 flex flex-col items-end">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Conv.</span>
+                            <span className={`text-sm font-bold ${index === 0 ? 'text-gray-400' : 'text-primary'}`}>
+                              {index === 0 ? '-' : `${conversion}%`}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Of Total</span>
+                            <span className="text-[10px] font-medium text-gray-500">{totalConversion}%</span>
+                          </div>
                         </div>
                       </div>
+                      
+                      {/* Connector line for visual funnel flow */}
+                      {index < funnelMetrics.length - 1 && (
+                        <div className="absolute left-[184px] lg:left-[216px] bottom-[-4px] w-[2px] h-2 bg-outline-variant/20 z-0" />
+                      )}
                     </div>
-                    
-                    {/* Connector line for visual funnel flow */}
-                    {index < funnelMetrics.length - 1 && (
-                      <div className="absolute left-[216px] bottom-[-4px] w-[2px] h-2 bg-outline-variant/20 z-0" />
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Bottom Section: Actions & Table */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
              {/* Dealer Actions */}
-             <div className="bg-surface-container-lowest rounded-xl p-6 ambient-shadow flex flex-col gap-4">
+             <div className="bg-surface-container-lowest rounded-xl p-4 lg:p-6 ambient-shadow flex flex-col gap-4">
                 <h3 className="font-bold text-lg">Dealer Actions</h3>
                 <ActionButton 
                   label="Manually Validate Coupon" 
@@ -469,20 +507,20 @@ export default function App() {
              </div>
 
              {/* Recent Activity Table */}
-             <div className="lg:col-span-2 bg-surface-container-lowest rounded-xl p-6 ambient-shadow">
-                <div className="flex items-center justify-between mb-6">
+             <div className="lg:col-span-2 bg-surface-container-lowest rounded-xl p-4 lg:p-6 ambient-shadow overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <h3 className="font-bold text-lg">Recent Coupon Activity</h3>
-                  <div className="relative">
+                  <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input 
                       type="text" 
                       placeholder="Search farmer or code..." 
-                      className="pl-10 pr-4 py-2 bg-surface-container-low rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
+                      className="pl-10 pr-4 py-2 bg-surface-container-low rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-full"
                     />
                   </div>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left">
+                  <table className="w-full text-left min-w-[600px]">
                     <thead>
                       <tr className="text-[10px] uppercase tracking-widest text-gray-400 border-b border-outline-variant/15">
                         <th className="pb-4 font-semibold">Coupon Code</th>
