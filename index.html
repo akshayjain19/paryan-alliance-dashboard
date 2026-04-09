@@ -4,6 +4,64 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Google AI Studio App</title>
+    <script>
+      (function() {
+        if (typeof window !== 'undefined') {
+          var originalFetch = window.fetch;
+          
+          // Function to create a safe setter for fetch
+          var protectFetch = function(obj, name) {
+            try {
+              Object.defineProperty(obj, name, {
+                get: function() { return originalFetch; },
+                set: function() { console.warn('Blocked attempt to overwrite ' + name); },
+                configurable: true,
+                enumerable: true
+              });
+            } catch (e) {}
+          };
+
+          // Protect window.fetch and globalThis.fetch
+          protectFetch(window, 'fetch');
+          if (typeof globalThis !== 'undefined') {
+            protectFetch(globalThis, 'fetch');
+          }
+
+          // Provide a safe 'global' Proxy
+          try {
+            var globalProxy = new Proxy(window, {
+              set: function(target, prop, value) {
+                if (prop === 'fetch') {
+                  console.warn('Blocked attempt to overwrite fetch via global');
+                  return true;
+                }
+                try {
+                  target[prop] = value;
+                } catch (e) {
+                  console.warn('Could not set ' + prop + ' on global', e);
+                }
+                return true;
+              },
+              get: function(target, prop) {
+                var val = target[prop];
+                if (typeof val === 'function') {
+                  return val.bind(target);
+                }
+                return val;
+              }
+            });
+
+            Object.defineProperty(window, 'global', {
+              get: function() { return globalProxy; },
+              configurable: true,
+              enumerable: true
+            });
+          } catch (e) {
+            window.global = window; // Fallback
+          }
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
