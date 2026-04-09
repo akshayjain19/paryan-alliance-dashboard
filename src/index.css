@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Public Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-primary: #0d631b;
+  --color-primary-container: #2e7d32;
+  --color-on-primary: #ffffff;
+  
+  --color-surface: #f7f9ff;
+  --color-surface-container-low: #eff4fc;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-highest: #dde3eb;
+  
+  --color-tertiary: #6e5100;
+  --color-tertiary-container: #fed0c1;
+  
+  --color-outline-variant: #bfcaba;
+  
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-[#161c22] font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .signature-gradient {
+    background: linear-gradient(135deg, #0d631b 0%, #2e7d32 100%);
+  }
+  
+  .glass-nav {
+    @apply bg-surface/80 backdrop-blur-[20px];
+  }
+  
+  .ambient-shadow {
+    box-shadow: 0 8px 32px rgba(27, 109, 36, 0.08);
+  }
+  
+  .ghost-border {
+    @apply border border-outline-variant/15;
+  }
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap');

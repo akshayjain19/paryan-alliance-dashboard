@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: funnel
+    // Document ID: current
+    // Fields:
+    //   - views: number (required)
+    //   - likes: number (required)
+    //   - comments: number (required)
+    //   - shares: number (required)
+    //   - saves: number (required)
+    //   - visits: number (required)
+    //   - enquiries: number (required)
+    //   - payments: number (required)
+    //   - updatedAt: string (optional)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "akshay.jain@hawkmartech.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidFunnel(data) {
+      return data.views is number &&
+             data.likes is number &&
+             data.comments is number &&
+             data.shares is number &&
+             data.saves is number &&
+             data.visits is number &&
+             data.enquiries is number &&
+             data.payments is number;
+    }
+
+    match /funnel/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && isValidFunnel(request.resource.data);
+    }
+
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+  }
+}

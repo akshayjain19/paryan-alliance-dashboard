@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "FunnelMetrics": {
+      "title": "Funnel Metrics",
+      "description": "Real-time funnel conversion metrics",
+      "type": "object",
+      "properties": {
+        "views": { "type": "number", "description": "Total views" },
+        "likes": { "type": "number", "description": "Total likes" },
+        "comments": { "type": "number", "description": "Total comments" },
+        "shares": { "type": "number", "description": "Total shares" },
+        "saves": { "type": "number", "description": "Total saves" },
+        "visits": { "type": "number", "description": "Total site visits" },
+        "enquiries": { "type": "number", "description": "Total enquiries" },
+        "payments": { "type": "number", "description": "Total final payments" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+      },
+      "required": ["views", "likes", "comments", "shares", "saves", "visits", "enquiries", "payments"]
+    }
+  },
+  "firestore": {
+    "/funnel": {
+      "schema": "FunnelMetrics",
+      "description": "Collection containing funnel state"
+    }
+  }
+}
