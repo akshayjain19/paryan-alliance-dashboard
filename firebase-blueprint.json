@@ -1,27 +1,22 @@
 {
   "entities": {
-    "FunnelMetrics": {
-      "title": "Funnel Metrics",
-      "description": "Real-time funnel conversion metrics",
+    "PostMetrics": {
+      "title": "Post Metrics",
+      "description": "Funnel metrics for an Instagram post",
       "type": "object",
       "properties": {
-        "views": { "type": "number", "description": "Total views" },
-        "likes": { "type": "number", "description": "Total likes" },
-        "comments": { "type": "number", "description": "Total comments" },
-        "shares": { "type": "number", "description": "Total shares" },
-        "saves": { "type": "number", "description": "Total saves" },
-        "visits": { "type": "number", "description": "Total site visits" },
-        "enquiries": { "type": "number", "description": "Total enquiries" },
-        "payments": { "type": "number", "description": "Total final payments" },
+        "comments": { "type": "number", "description": "Total Instagram comments" },
+        "dmsSent": { "type": "number", "description": "Total DMs sent" },
+        "whatsappVisits": { "type": "number", "description": "Total WhatsApp bot visits" },
         "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
       },
-      "required": ["views", "likes", "comments", "shares", "saves", "visits", "enquiries", "payments"]
+      "required": ["comments", "dmsSent", "whatsappVisits"]
     }
   },
   "firestore": {
-    "/funnel": {
-      "schema": "FunnelMetrics",
-      "description": "Collection containing funnel state"
+    "/posts": {
+      "schema": "PostMetrics",
+      "description": "Collection containing post funnel metrics"
     }
   }
 }

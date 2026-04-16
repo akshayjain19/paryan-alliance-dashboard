@@ -1,8 +1,33 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /funnel/{docId} {
-      allow read, write: if true;
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: posts
+    // Document ID: post1 (or any unique ID)
+    // Fields:
+    //   - comments: number (required, >= 0)
+    //   - dmsSent: number (required, >= 0)
+    //   - whatsappVisits: number (required, >= 0)
+    //   - updatedAt: string (ISO 8601)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isValidPost(data) {
+      return data.keys().hasAll(['comments', 'dmsSent', 'whatsappVisits']) &&
+             data.keys().hasOnly(['comments', 'dmsSent', 'whatsappVisits', 'updatedAt']) &&
+             data.comments is number && data.comments >= 0 &&
+             data.dmsSent is number && data.dmsSent >= 0 &&
+             data.whatsappVisits is number && data.whatsappVisits >= 0 &&
+             (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() < 100));
+    }
+
+    match /posts/{postId} {
+      allow read: if true;
+      allow create, update: if isValidPost(request.resource.data);
     }
 
     match /{path=**} {
